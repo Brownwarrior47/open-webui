@@ -150,6 +150,9 @@ class PgvectorClient:
                 new_items.append(new_chunk)
             self.session.bulk_save_objects(new_items)
             self.session.commit()
+            # Refresh the index so the updated number of embeddings is reflected
+            self.session.execute(text("REINDEX INDEX idx_document_chunk_vector;"))
+            self.session.commit()
             print(
                 f"Inserted {len(new_items)} items into collection '{collection_name}'."
             )
@@ -183,6 +186,9 @@ class PgvectorClient:
                         vmetadata=item["metadata"],
                     )
                     self.session.add(new_chunk)
+            self.session.commit()
+            # Refresh the index after upsert to update element count
+            self.session.execute(text("REINDEX INDEX idx_document_chunk_vector;"))
             self.session.commit()
             print(f"Upserted {len(items)} items into collection '{collection_name}'.")
         except Exception as e:
